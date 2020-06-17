@@ -19,7 +19,7 @@ while(cap.isOpened()):
         if cv2.waitKey(1) & 0xFF == ord('c'):
             cv2.imwrite('./SfM/image%d.jpg'%(i), frame)
             i += 1
-        elif cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     else:
         break

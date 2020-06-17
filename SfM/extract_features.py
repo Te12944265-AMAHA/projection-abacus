@@ -7,19 +7,19 @@ from scipy.spatial import distance
 from scipy.ndimage import gaussian_filter
 from scipy.linalg import rq
 
-img = cv2.imread('./SfM/image2.jpg', 0)
-edges = cv2.Canny(img,10,200)
-img0 = cv2.medianBlur(img, 5)
-print(img0.dtype)
-th3 = cv2.adaptiveThreshold(img0, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY,11,2)
-sobelx8u = cv2.Sobel(img,cv2.CV_8U,1,0,ksize=5)
+img = cv2.imread('./SfM/image4.jpg',0)
+cv2.imshow('lol', img)
+cv2.waitKey(0)
+# Initiate STAR detector
+orb = cv2.ORB()
 
-# Output dtype = cv2.CV_64F. Then take its absolute and convert to cv2.CV_8U
-sobelx64f = cv2.Sobel(img,cv2.CV_64F,1,0,ksize=5)
-abs_sobel64f = np.absolute(sobelx64f)
-sobel_8u = np.uint8(abs_sobel64f)
-plt.subplot(131),plt.imshow(edges, 'gray'),plt.title('Input')
-plt.subplot(132),plt.imshow(sobelx8u, 'gray'),plt.title('Output')
-plt.subplot(133),plt.imshow(sobel_8u, 'gray'),plt.title('Output2')
+# find the keypoints with ORB
+kp = orb.detect(img,None)
+
+# compute the descriptors with ORB
+kp, des = orb.compute(img, kp)
+
+# draw only keypoints location,not size and orientation
+img2 = cv2.drawKeypoints(img,kp,color=(0,255,0), flags=0)
+plt.imshow(img2)
 plt.show()
