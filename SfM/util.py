@@ -1,14 +1,10 @@
-"""
-Homework 5
-Submission Functions
-"""
 import numpy as np 
 import helper as hlp
-
-# import packages here
+import cv2
 from scipy.spatial import distance
 from scipy.ndimage import gaussian_filter
 from scipy.linalg import rq
+import matplotlib.pyplot as plt
 
 """
 Q3.1.1 Eight Point Algorithm
@@ -311,29 +307,58 @@ def drawlines(img1,img2,lines,pts1,pts2):
     ''' img1 - image on which we draw the epilines for the points in img2
         lines - corresponding epilines '''
     r,c = img1.shape
-    img1 = cv.cvtColor(img1,cv.COLOR_GRAY2BGR)
-    img2 = cv.cvtColor(img2,cv.COLOR_GRAY2BGR)
+    img1 = cv2.cvtColor(img1,cv2.COLOR_GRAY2BGR)
+    img2 = cv2.cvtColor(img2,cv2.COLOR_GRAY2BGR)
     for r,pt1,pt2 in zip(lines,pts1,pts2):
         color = tuple(np.random.randint(0,255,3).tolist())
         x0,y0 = map(int, [0, -r[2]/r[1] ])
         x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
-        img1 = cv.line(img1, (x0,y0), (x1,y1), color,1)
-        img1 = cv.circle(img1,tuple(pt1),5,color,-1)
-        img2 = cv.circle(img2,tuple(pt2),5,color,-1)
+        img1 = cv2.line(img1, (x0,y0), (x1,y1), color,1)
+        img1 = cv2.circle(img1,tuple(pt1),5,color,-1)
+        img2 = cv2.circle(img2,tuple(pt2),5,color,-1)
     return img1,img2
 
 
-def foo():
+def foo(pts1, pts2, img1, img2):
     # Find epilines corresponding to points in right image (second image) and
     # drawing its lines on left image
-    lines1 = cv.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
+    lines1 = cv2.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
     lines1 = lines1.reshape(-1,3)
     img5,img6 = drawlines(img1,img2,lines1,pts1,pts2)
     # Find epilines corresponding to points in left image (first image) and
     # drawing its lines on right image
-    lines2 = cv.computeCorrespondEpilines(pts1.reshape(-1,1,2), 1,F)
+    lines2 = cv2.computeCorrespondEpilines(pts1.reshape(-1,1,2), 1,F)
     lines2 = lines2.reshape(-1,3)
     img3,img4 = drawlines(img2,img1,lines2,pts2,pts1)
     plt.subplot(121),plt.imshow(img5)
     plt.subplot(122),plt.imshow(img3)
     plt.show()
+
+
+def calc_reproj_err(pt, pt3d, P):
+    N = np.shape(pt)[0]
+    pt3d_h = np.concatenate((pt3d, np.ones((pt3d.shape[0], 1))), axis=1)
+    pt_p = np.dot(P, pt3d_h.T).T
+    denom = np.tile(pt_p[:,2],(2,1)).T
+    pt_pp = pt_p[:,0:2]/denom
+    dist = np.sum(np.sqrt(np.sum((pt_pp-pt) ** 2, axis=1)))/N
+    return dist
+
+
+def summarize_reproj_err(points1, points2, pt_all, P1, P_all):
+    data = [[' ', 'pts1', 'pts2'],
+            ['P2_1',0,0],
+            ['P2_2',0,0],
+            ['P2_3',0,0],
+            ['P2_4',0,0]]
+    for i in range(4):
+        e1 = calc_reproj_err(points1, pt_all[i], P1)
+        e2 = calc_reproj_err(points2, pt_all[i], P_all[i])
+        data[i+1][1] = e1 
+        data[i+1][2] = e2
+
+    for i in range(len(data)):
+        if i == 0:
+            print('{:<10s}{:<12s}{:<12s}'.format(data[i][0],data[i][1],data[i][2]))
+        else:
+            print('{:<10s}{:<8.4f}{:<8.4f}'.format(data[i][0],data[i][1],data[i][2]))
